@@ -4,11 +4,14 @@ from PIL import Image
 import numpy as np
 from BestMatch import bestMatch, initSearchAnn
 
-def loadImages() :
-    A = Image.open("images/arch-A.jpg")
-    Ap= Image.open("images/arch-Ap.jpg")
-    B = Image.open("images/arch-B.jpg")
+def loadImages(s) :
 
+    A = Image.open("images/"+s+"/A.jpg")
+    Ap= Image.open("images/"+s+"/Ap.jpg")
+    B = Image.open("images/"+s+"/B.jpg")
+    A.show()
+    Ap.show()
+    B.show()
     assert( A.size == Ap.size )
     return A, Ap, B
 def YIQ2RGB(arr) :
@@ -109,7 +112,14 @@ def GuassianPyramid(A, Ap, B) :
 
 
 def main() :
-    imgA, imgAp, imgB    = loadImages()
+    if len(sys.argv) < 2 :
+        print("Usage: ./{} <image directory>", sys.argv[0])
+        print("Available options: ")
+        for dname in os.listdir("./images") :
+            print("\t{}".format(dname))
+        quit()
+
+    imgA, imgAp, imgB    = loadImages(sys.argv[1])
     yA, yAp, yB = convertToYIQ(imgA, imgAp, imgB)
 
     # Guassian Pyramid
@@ -129,10 +139,13 @@ def main() :
                 p = bestMatch(A, Ap, B, Bp, s, l, L, q)
                 pw, ph = p
                 currLayer[w][h] = Ap[l][pw][ph]
+                # currLayer[w][h][1] = B[l][w][h][1]
+                # currLayer[w][h][2] = B[l][w][h][2]
                 s[w][h] = p
         print("Layer ", l, "done!" )
-        YIQ2RGB(currLayer)
+        # YIQ2RGB(currLayer)
 
+    YIQ2RGB(Bp[L-1])
 
 if __name__ == "__main__" :
     main()
