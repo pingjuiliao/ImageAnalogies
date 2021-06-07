@@ -82,7 +82,7 @@ def bestCohereanceMatch(A, Ap, B, Bp, s, l, L, q) :
 def bestApproximateMatchAnn(A, B, l, q) :
     qx, qy = q
     B_vec  = getFeatureVector(B[l], l, 5, qx, qy)
-    B_vec += getFeatureVector(B[l-1], l-1, 3, qx//2, qy//2)
+    B_vec += getFeatureVector(B[l-1], l-1, 3, qx, qy)
     w, H = len(A[l]), len(A[l][0])
     q = AnnoyIndex(len(B_vec), 'euclidean')
     q.load('A{}.ann'.format(l))
@@ -100,7 +100,7 @@ def initSearchAnn(A, L) :
             for h in range(H) :
                 idx = w*H + h
                 v  = getFeatureVector(A[l], l, 5, w, h)
-                v += getFeatureVector(A[l-1], l-1, 3, w, h )
+                v += getFeatureVector(A[l-1], l-1, 3, w//2, h//2)
                 t.add_item(idx, v)
         t.build(10)
         t.save("A{}.ann".format(l))

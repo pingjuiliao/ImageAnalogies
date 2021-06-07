@@ -113,7 +113,7 @@ def GuassianPyramid(A, Ap, B) :
 
 def main() :
     if len(sys.argv) < 2 :
-        print("Usage: ./{} <image directory>", sys.argv[0])
+        print("Usage: {} <image directory>".format(sys.argv[0]))
         print("Available options: ")
         for dname in os.listdir("./images") :
             print("\t{}".format(dname))
