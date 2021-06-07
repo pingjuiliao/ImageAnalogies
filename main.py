@@ -2,10 +2,7 @@
 import os, sys
 from PIL import Image
 import numpy as np
-
-#A = None
-#Ap= None
-#B = None
+from BestMatch import bestMatch, initSearchAnn
 
 def loadImages() :
     A = Image.open("images/arch-A.jpg")
@@ -78,7 +75,8 @@ def GP(arr) :
                 newArray[i][j][0] = Y
                 newArray[i][j][1] = I
                 newArray[i][j][2] = Q
-        pyramid.append(newArray)
+        pyramid = [ newArray ] + pyramid
+        prevArray = newArray
 
     return pyramid
 
@@ -89,37 +87,52 @@ def GuassianPyramid(A, Ap, B) :
     pyrAp= GP(Ap)
     pyrB = GP(B)
 
-    """ DEBUG
-    for a in pyrAp :
-        YIQ2RGB(a)
-    print("done")
-    """
+    # debug
+    #for a in pyrAp :
+    #    YIQ2RGB(a)
+    #print("done")
+
     pyrBp = []
     for a in pyrB : # a for array
         newArr = [[[0, 0, 0] for h in range(len(a[0]))] for w in range(len(a)) ]
         pyrBp.append(newArr)
+
+    # DEBUG
     L = min(len(pyrA), len(pyrB))
     for i in range(L) :
-        print(len(pyrA[i]), len(pyrA[i][0]))
-        print(len(pyrAp[i]), len(pyrAp[i][0]))
-        print(len(pyrB[i]), len(pyrB[i][0]))
-        print(len(pyrBp[i]), len(pyrBp[i][0]))
+        assert(len(pyrA[i]) == len(pyrAp[i]))
+        assert(len(pyrA[i][0]) == len(pyrAp[i][0]))
+        assert(len(pyrB[i]) == len(pyrBp[i]))
+        assert(len(pyrB[i][0]) == len(pyrBp[i][0]))
 
+    return pyrA, pyrAp, pyrB, pyrBp
 
 
 def main() :
-    A, Ap, B    = loadImages()
-    yA, yAp, yB = convertToYIQ(A, Ap, B)
-    GuassianPyramid(yA, yAp, yB)
+    imgA, imgAp, imgB    = loadImages()
+    yA, yAp, yB = convertToYIQ(imgA, imgAp, imgB)
 
+    # Guassian Pyramid
+    A, Ap, B, Bp = GuassianPyramid(yA, yAp, yB)
+    L    = min(len(A), len(B))
+
+    #
+    initSearchAnn(A, L)
+
+    for l in range(L) : ## from coarse to finest
+        currLayer = Bp[l]
+        W, H = len(currLayer), len(currLayer[0])
+        s = [[ (0, 0) for _ in range(H)] for _ in range(W) ]
+        for w in range(W) :  ## scan-line order
+            for h in range(H) :
+                q = (w, h)
+                p = bestMatch(A, Ap, B, Bp, s, l, L, q)
+                pw, ph = p
+                currLayer[w][h] = Ap[l][pw][ph]
+                s[w][h] = p
+        print("Layer ", l, "done!" )
+        YIQ2RGB(currLayer)
 
 
 if __name__ == "__main__" :
     main()
-    im = Image.open("images/arch-Ap.jpg")
-    p = im.load()
-    for w in range(im.width) :
-        for h in range(im.height) :
-            r, g, b = p[w, h]
-            p[w, h] = g, b, r
-    im.show()
